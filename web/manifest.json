@@ -1,6 +1,6 @@
 {
-    "name": "wmorgtr",
-    "short_name": "wmorgtr",
+    "name": "wmorgtr_new",
+    "short_name": "wmorgtr_new",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

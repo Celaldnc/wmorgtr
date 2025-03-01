@@ -1,68 +1,88 @@
-WM Teknoloji Haber Uygulaması
-Geliştirici: Celal Dinç
-Teknoloji: Flutter + Dart + Firebase
-Backend: Firebase + WordPress REST API
-Platformlar: iOS & Android
+# WM Teknoloji Haber Uygulaması
 
-1. Proje Amacı
-WM Teknoloji Haber Uygulaması, teknoloji meraklılarının wm.org.tr sitesindeki en güncel haberleri kolayca takip etmesini sağlamak için tasarlanmıştır. Kullanıcıların özelleştirilmiş haber akışı, arama, bildirimler ve interaktif içeriklerle keyifli bir deneyim yaşaması hedeflenmektedir.
+Bu uygulama, WM.ORG.TR için geliştirilmiş bir Flutter tabanlı teknoloji haber uygulamasıdır.
 
-2. Temel Özellikler
-A) Haber Çekme ve Görüntüleme
-WordPress API Entegrasyonu: Haberleri çekmek için https://wm.org.tr/wp-json/wp/v2/posts API kullanılır.
-Kategoriye Göre Haberler: Kullanıcılar haberleri belirli kategorilere (Yapay Zeka, Oyun, Mobil, Donanım vb.) göre filtreleyebilir.
-Haber Detay Sayfası: Tüm haberler detaylı bir sayfada başlık, içerik, görseller, yorumlar ve paylaşım butonlarıyla gösterilir.
-Görsel Ağırlıklı Akış: Haber listesi, büyük görseller ve özet metinlerle zenginleştirilerek kullanıcı deneyimi artırılır.
-B) Kullanıcı Etkileşimi ve Özelleştirme
-Kullanıcı Kaydı & Girişi (Firebase Authentication)
-Google, Apple ID veya e-posta ile giriş yapılabilir.
-Kullanıcı bilgileri Firebase Firestore’da saklanır.
-Kullanıcı Tercihlerine Göre Haber Akışı
-Kullanıcı, favori kategorilerini seçerek haber akışını kişiselleştirebilir.
-Makine öğrenimi ile ilgilendiği haber türlerine göre öneriler alabilir.
-Beğeni & Kaydetme Sistemi
-Kullanıcılar haberleri beğenebilir veya daha sonra okumak için kaydedebilir.
-Kaydedilen haberler profil sayfasında listelenir.
-C) Arama ve Filtreleme
-Anahtar Kelime ile Arama (https://wm.org.tr/wp-json/wp/v2/posts?search=yapay%20zeka)
-Tarih, Kategori ve Popülerliğe Göre Filtreleme
-Hızlı Erişim İçin Son Zamanlarda Okunan Haberler
-D) Bildirimler ve Güncellemeler
-Gerçek Zamanlı Bildirimler (Firebase Cloud Messaging)
-Öne çıkan haberler, özel bültenler veya acil teknoloji haberleri için anlık bildirimler gönderilir.
-Kullanıcılar belirli kategoriler için bildirim açıp kapatabilir.
-Günlük / Haftalık Özet Bildirimleri
-Kullanıcı, haber özetlerini belirli zaman aralıklarında almayı seçebilir.
-E) Sosyal Paylaşım ve Topluluk
-Yorum Yapma & Beğeni
-Firebase Firestore kullanarak kullanıcıların haberler hakkında yorum yapmasına izin verilir.
-Haber Paylaşımı
-Kullanıcılar haberleri Twitter, Instagram, WhatsApp vb. sosyal medya platformlarında paylaşabilir.
-3. Kullanıcı Arayüzü (UI) & Deneyimi (UX)
-Ana Sayfa (Home)
-En güncel haberler kayan manşet (carousel) tasarımıyla öne çıkarılır.
-Kullanıcının önceki tercihleri baz alınarak önerilen haberler gösterilir.
-Hızlı filtre butonları ile popüler kategorilere ulaşım sağlanır.
-Haber Detay Sayfası
-Büyük başlık ve öne çıkan görsel
-İçerik bölümü (HTML desteğiyle zengin metin)
-Beğen, Kaydet, Paylaş butonları
-Kullanıcı yorumları & puanlama sistemi
-Arama ve Filtreleme Sayfası
-Gelişmiş arama: Anahtar kelime + kategori + popülerlik
-Son aramalar: Kullanıcı daha önce yaptığı aramalara kolayca ulaşabilir.
-Profil Sayfası
-Favori Kategoriler: Kullanıcı ilgi alanlarını değiştirebilir.
-Kaydedilen Haberler: Daha sonra okumak için kaydedilen haberler burada listelenir.
-Ayarlar: Bildirim tercihlerinin değiştirilmesi, karanlık mod seçeneği vb.
-4. Teknik Yapı
-Bileşen	Teknoloji
-Mobil Uygulama	Flutter (Dart)
-Backend	Firebase Firestore & WordPress API
-Auth	Firebase Authentication (Google, Apple, E-posta)
-Bildirimler	Firebase Cloud Messaging
-Haber Çekme	WordPress REST API
-Depolama	Firebase Firestore
-Durum Yönetimi	Provider / Riverpod (tercihe göre)
-Hata Yönetimi	Flutter Error Handling
-UI/UX Tasarım	Material Design + Custom Animations
+## Kurulum Adımları
+
+### 1. Gerekli Paketlerin Yüklenmesi
+
+Projeyi klonladıktan sonra, aşağıdaki komutu çalıştırarak gerekli tüm paketleri yükleyin:
+
+```bash
+flutter pub get
+```
+
+### 2. Firebase Kurulumu
+
+Bu uygulama Firebase servislerini kullanmaktadır. Firebase'i projenize entegre etmek için şu adımları izleyin:
+
+#### 2.1. Firebase CLI'ı Yükleyin
+
+```bash
+npm install -g firebase-tools
+```
+
+#### 2.2. Firebase'e Giriş Yapın
+
+```bash
+firebase login
+```
+
+#### 2.3. FlutterFire CLI'ı Yükleyin
+
+```bash
+dart pub global activate flutterfire_cli
+```
+
+#### 2.4. Firebase Projenizi Yapılandırın
+
+1. [Firebase Console](https://console.firebase.google.com/)'a gidin
+2. Yeni bir proje oluşturun (veya mevcut projenizi seçin)
+3. Flutter uygulamanızı projeye ekleyin
+
+#### 2.5. FlutterFire CLI ile Yapılandırma
+
+Proje dizininde şu komutu çalıştırın:
+
+```bash
+flutterfire configure --project=your-firebase-project-id
+```
+
+Bu komut, `firebase_options.dart` dosyasını otomatik olarak oluşturacaktır.
+
+### 3. Uygulama Konfigürasyonu
+
+Projenin kök dizininde `.env` dosyası oluşturun (opsiyonel):
+
+```
+API_KEY=your_api_key_here
+API_URL=your_api_url_here
+```
+
+### 4. Uygulamayı Çalıştırın
+
+```bash
+flutter run
+```
+
+## Özellikler
+
+- Kullanıcı kaydı ve girişi
+- Teknoloji haberleri listesi
+- Haber detay sayfası
+- Kullanıcı profil yönetimi
+
+## Proje Yapısı
+
+- `/lib/screens` - Uygulama ekranları
+- `/lib/services` - Firebase ve API servisleri
+- `/lib/models` - Veri modelleri
+- `/lib/widgets` - Yeniden kullanılabilir widget'lar
+
+## Katkıda Bulunma
+
+Lütfen geliştirme için pull request göndermeden önce test ettiğinizden emin olun.
+
+## Lisans
+
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.

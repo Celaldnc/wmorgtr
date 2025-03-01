@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1083021889823",
+    "project_id": "wm-teknoloji-haber",
+    "storage_bucket": "wm-teknoloji-haber.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083021889823:android:f4fa9b9f4d22741d17e02a",
+        "android_client_info": {
+          "package_name": "com.example.wmorgtr_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBLQ-bkzhK_pUIKNu9Hmo0Rq5jlM0h7q0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

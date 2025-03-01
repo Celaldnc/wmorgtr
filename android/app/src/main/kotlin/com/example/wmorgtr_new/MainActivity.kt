@@ -1,4 +1,4 @@
-package com.example.wmorgtr
+package com.example.wmorgtr_new
 
 import io.flutter.embedding.android.FlutterActivity
 
