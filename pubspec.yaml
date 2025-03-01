@@ -1,4 +1,4 @@
-name: wmorgtr
+name: wmorgtr_new
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -34,24 +34,24 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
+  
   # Firebase paketleri
-  firebase_core: ^2.15.1
-  firebase_auth: ^4.9.0
-  cloud_firestore: ^4.9.1
-  firebase_messaging: ^14.6.7
-  firebase_storage: ^11.2.6
+  cached_network_image: ^3.3.0
+  flutter_rating_bar: ^4.0.1
+  firebase_core: ^2.32.0
+  cloud_firestore: ^4.15.5
+  firebase_auth: ^4.17.5
   
-  # Diğer önemli paketler
-  provider: ^6.0.5
-  http: ^1.1.0
-  cached_network_image: ^3.2.3
-  flutter_html: ^3.0.0-alpha.5
-  share_plus: ^7.1.0
-  url_launcher: ^6.1.14
-  
-  # Animasyon paketi
+  # Animasyon ve UI paketleri
   animated_text_kit: ^4.2.2
+  
+  # HTTP istekleri için
+  http: ^1.1.0
+  
+  # Diğer yardımcı paketler
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  firebase_app_check: ^0.2.2+7
 
 dev_dependencies:
   flutter_test:
