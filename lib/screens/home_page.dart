@@ -10,9 +10,7 @@ class HomePage extends StatelessWidget {
         title: Text('WM Teknoloji Haber'),
         backgroundColor: Theme.of(context).primaryColor,
       ),
-      body: Center(
-        child: Text('Ana Sayfa İçeriği Burada Görüntülenecek'),
-      ),
+      body: Center(child: Text('Ana Sayfa İçeriği Burada Görüntülenecek')),
     );
   }
-} 
+}

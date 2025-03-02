@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
-import 'package:wmorgtr_new/screens/splash_screen.dart';
-import 'package:wmorgtr_new/screens/home_page.dart';
-import 'package:wmorgtr_new/screens/login_page.dart';
-import 'package:wmorgtr_new/screens/register_page.dart';
+import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/login_page.dart';
+import 'screens/register_page.dart';
+import 'providers/unified_news_provider.dart';
+import 'providers/explorer_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:wmorgtr_new/services/auth_service.dart';
+import 'services/auth_service.dart';
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'dart:io' show Platform;
@@ -88,20 +91,26 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'WM Teknoloji Haber',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        primaryColor: Color(0xFFB21274), // WM.ORG.TR mor rengi
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UnifiedNewsProvider()),
+        ChangeNotifierProvider(create: (_) => ExplorerProvider()),
+      ],
+      child: MaterialApp(
+        title: 'WM Teknoloji Haber',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          primaryColor: Color(0xFFB21274), // WM.ORG.TR mor rengi
+        ),
+        home: SplashScreen(),
+        routes: {
+          '/login': (context) => LoginPage(),
+          '/home': (context) => HomeScreen(),
+          '/register': (context) => RegisterPage(),
+        },
       ),
-      home: SplashScreen(),
-      routes: {
-        '/login': (context) => LoginPage(),
-        '/home': (context) => HomePage(),
-        '/register': (context) => RegisterPage(),
-      },
     );
   }
 }

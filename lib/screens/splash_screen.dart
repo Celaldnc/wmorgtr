@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'dart:async';
-import 'package:wmorgtr_new/screens/home_page.dart';
-import 'package:wmorgtr_new/screens/login_page.dart';
+import 'home_screen.dart'; // HomeScreen'e doğrudan referans
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,9 +14,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // 5 saniye sonra ana sayfaya yönlendir
+    // 3 saniye sonra ana sayfaya yönlendir
     Timer(Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
     });
   }
 
@@ -29,6 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Logo veya animasyon
             DefaultTextStyle(
               style: TextStyle(
                 fontSize: 36.0,
@@ -46,6 +49,13 @@ class _SplashScreenState extends State<SplashScreen> {
                 totalRepeatCount: 1,
                 displayFullTextOnTap: true,
               ),
+            ),
+
+            // Alt metin
+            SizedBox(height: 20),
+            Text(
+              'Haberlerin kaynağı',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ],
         ),

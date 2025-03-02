@@ -2,6 +2,30 @@
 
 Bu uygulama, WM.ORG.TR için geliştirilmiş bir Flutter tabanlı teknoloji haber uygulamasıdır.
 
+## API Servisleri ve Veri Yapısı
+
+Uygulama, WM.org.tr WordPress sitesinden WordPress REST API aracılığıyla haber verilerini çekmektedir.
+
+### API Servisi Yapısı
+
+Uygulama şu veri noktalarını kullanır:
+
+- `https://wm.org.tr/wp-json/wp/v2/posts`: Tüm haberleri almak için
+- `https://wm.org.tr/wp-json/wp/v2/categories`: Kategorileri almak için
+- `https://wm.org.tr/wp-json/wp/v2/posts?categories={ID}`: Kategori bazlı haberleri almak için
+- `https://wm.org.tr/wp-json/wp/v2/posts?search={QUERY}`: Haber aramak için
+
+Tüm bu isteklerde `_embed` parametresi ekleyerek, öne çıkan görsel ve yazar bilgisi gibi ilişkisel verileri de alıyoruz.
+
+### Yeni Birleştirilmiş Veri Yapısı
+
+Uygulamada, tekrar eden kodları azaltmak amacıyla veri servisleri ve provider'lar yeniden düzenlenmiştir:
+
+- `ApiService`: Tüm HTTP isteklerini yürüten merkezi bir servis
+- `UnifiedNewsProvider`: Hem NewsModel hem de Post modellerini destekleyen tek bir Provider
+
+Bu yapı sayesinde, eski kodlar ile geriye dönük uyumluluk korunurken, daha temiz bir mimari elde edilmiştir.
+
 ## Kurulum Adımları
 
 ### 1. Gerekli Paketlerin Yüklenmesi
