@@ -11,6 +11,8 @@ class UnifiedNewsProvider extends ChangeNotifier {
   List<NewsModel> _latestNews = [];
   List<NewsModel> _categoryNews = [];
   List<NewsModel> _searchResults = [];
+  List<NewsModel> _personalizedNews = []; // Kişiselleştirilmiş haberler
+  List<NewsModel> _continueReadingNews = []; // Devam edilen okumalar
 
   // Post Modelleri
   List<Post> _allPosts = [];
@@ -30,6 +32,8 @@ class UnifiedNewsProvider extends ChangeNotifier {
   List<NewsModel> get latestNews => _latestNews;
   List<NewsModel> get categoryNews => _categoryNews;
   List<NewsModel> get searchResults => _searchResults;
+  List<NewsModel> get personalizedNews => _personalizedNews;
+  List<NewsModel> get continueReadingNews => _continueReadingNews;
 
   List<Post> get allPosts => _allPosts;
   List<Post> get categoryPosts => _categoryPosts;
@@ -181,7 +185,8 @@ class UnifiedNewsProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      final newResults = await _apiService.searchNews(query, page: page);
+      // Arama parametresi ile haberleri getir
+      final newResults = await _apiService.getNewsBySearch(query, page: page);
 
       if (page == 1) {
         _searchResults = newResults;
@@ -229,6 +234,57 @@ class UnifiedNewsProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _setError('Kategoriler yüklenirken bir hata oluştu: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Kişiselleştirilmiş haberleri yükle (kullanıcının ilgi alanlarına göre)
+  Future<void> fetchPersonalizedNews({int page = 1}) async {
+    if (page == 1) {
+      _personalizedNews = [];
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    try {
+      // Gerçek uygulamada kullanıcının ilgi alanlarına göre haberler getirilecek
+      // Şimdilik örnek olarak en son haberleri kullanıyoruz
+      final newNews = await _apiService.getAllNews(page: page);
+
+      if (page == 1) {
+        _personalizedNews = newNews;
+      } else {
+        _personalizedNews.addAll(newNews);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _setError('Kişiselleştirilmiş haberler yüklenirken bir hata oluştu: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Devam edilen okumaları yükle
+  Future<void> fetchContinueReading() async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      // Gerçek uygulamada kullanıcının yarım bıraktığı haberler getirilecek
+      // Şimdilik örnek olarak trend haberleri kullanıyoruz
+      _continueReadingNews = await _apiService.getTrendingNews();
+
+      // Sadece ilk haberi al (örnek için)
+      if (_continueReadingNews.isNotEmpty) {
+        _continueReadingNews = [_continueReadingNews.first];
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _setError('Devam edilen okumalar yüklenirken bir hata oluştu: $e');
     } finally {
       _setLoading(false);
     }

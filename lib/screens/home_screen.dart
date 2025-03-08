@@ -5,43 +5,49 @@ import '../providers/unified_news_provider.dart';
 import '../widgets/news_card.dart';
 import 'news_detail_screen.dart';
 import 'explorer_screen.dart';
+import 'create_news_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   int _currentPage = 1;
   bool _isLoadingMore = false;
   int _selectedCategoryIndex = 0;
   int _selectedNavIndex = 0;
+  late TabController _tabController;
 
   final ScrollController _scrollController = ScrollController();
 
-  // Sabit kategori listesi (gerçek uygulamada API'den alınacak)
-  final List<Map<String, dynamic>> _categories = [
-    {'id': 0, 'name': 'All'},
-    {'id': 1, 'name': 'Sports'},
-    {'id': 2, 'name': 'Politics'},
-    {'id': 3, 'name': 'Business'},
-    {'id': 4, 'name': 'Health'},
-    {'id': 5, 'name': 'Travel'},
-    {'id': 6, 'name': 'Science'},
+  // Kategori listesi
+  final List<String> _categories = [
+    'For You',
+    'Android',
+    'SEO',
+    'Apple',
+    'İşadamları',
+    'Tiyatro',
+    'Yeni Oyunlar',
+    'Sanatçılar',
+    'Oyun',
   ];
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: _categories.length, vsync: this);
+    _tabController.addListener(_handleTabChange);
 
     // Verileri yükle - build tamamlandıktan sonra
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
-      _loadCategories(); // Kategorileri yükle
     });
 
     // Scroll olayını dinle (sonsuz kaydırma için)
@@ -53,27 +59,69 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Kategorileri API'den yükle
-  Future<void> _loadCategories() async {
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      setState(() {
+        _selectedCategoryIndex = _tabController.index;
+        _currentPage = 1;
+      });
+
+      // Kategori değiştiğinde haberleri yükle
+      _loadCategoryNews(_selectedCategoryIndex);
+
+      // Sayfayı yukarı kaydır
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    }
+  }
+
+  void _loadCategoryNews(int index) {
     final newsProvider = Provider.of<UnifiedNewsProvider>(
       context,
       listen: false,
     );
-    await newsProvider.fetchCategories();
 
-    // API'den gelen kategorileri state'e aktar
-    if (newsProvider.categories.isNotEmpty) {
-      setState(() {
-        // "All" kategorisini her zaman listenin başında tut
-        final apiCategories =
-            newsProvider.categories
-                .map((category) => {'id': category.id, 'name': category.name})
-                .toList();
-
-        _categories.clear();
-        _categories.add({'id': 0, 'name': 'All'});
-        _categories.addAll(apiCategories);
-      });
+    if (index == 0) {
+      // For You - Kullanıcının kaydettiği haber türlerine göre
+      newsProvider.fetchPersonalizedNews();
+    } else {
+      // Diğer kategoriler - wm.org.tr'den ilgili kategorideki haberler
+      // Kategori ID'lerini wm.org.tr'deki kategori ID'leriyle eşleştir
+      int categoryId;
+      switch (index) {
+        case 1: // Android
+          categoryId = 1; // Android kategorisi ID'si
+          break;
+        case 2: // SEO
+          categoryId = 15; // SEO kategorisi ID'si
+          break;
+        case 3: // Apple
+          categoryId = 2; // Apple kategorisi ID'si
+          break;
+        case 4: // İşadamları
+          categoryId = 20; // İşadamları kategorisi ID'si
+          break;
+        case 5: // Tiyatro
+          categoryId = 25; // Tiyatro kategorisi ID'si
+          break;
+        case 6: // Yeni Oyunlar
+          categoryId = 30; // Yeni Oyunlar kategorisi ID'si
+          break;
+        case 7: // Sanatçılar
+          categoryId = 35; // Sanatçılar kategorisi ID'si
+          break;
+        case 8: // Oyun
+          categoryId = 6; // Oyun kategorisi ID'si
+          break;
+        default:
+          categoryId = 1; // Varsayılan olarak Android kategorisi
+      }
+      newsProvider.fetchNewsByCategory(categoryId);
     }
   }
 
@@ -93,9 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       listen: false,
     );
-    await newsProvider.fetchTrendingNews();
-    await newsProvider.fetchLatestNews();
-    await newsProvider.fetchCategories();
+    await newsProvider.fetchPersonalizedNews(); // For You için
+    await newsProvider.fetchContinueReading(); // Devam edilen haberler
   }
 
   Future<void> _loadMoreNews() async {
@@ -117,16 +164,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _searchController.text,
           page: _currentPage + 1,
         );
-      } else if (_selectedCategoryIndex > 0) {
-        // Kategori seçili ise, o kategorinin haberlerini getir
-        final categoryId = _categories[_selectedCategoryIndex]['id'] as int;
-        await newsProvider.fetchNewsByCategory(
-          categoryId,
-          page: _currentPage + 1,
-        );
       } else {
-        // Seçili kategori All ise veya kategori seçili değilse, tüm haberleri getir
-        await newsProvider.fetchLatestNews(page: _currentPage + 1);
+        // Kategori seçimine göre haberleri getir
+        _loadCategoryNews(_selectedCategoryIndex);
       }
 
       setState(() {
@@ -176,13 +216,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
         child:
             _selectedNavIndex == 0
@@ -191,52 +232,66 @@ class _HomeScreenState extends State<HomeScreen> {
                     return CustomScrollView(
                       controller: _scrollController,
                       slivers: [
-                        // Uygulama Çubuğu
-                        SliverAppBar(
-                          floating: true,
-                          pinned: false,
-                          snap: false,
-                          backgroundColor: Colors.white,
-                          elevation: 0,
-                          title: const Text(
-                            'WM.org.tr',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                        // Selamlama ve Bildirim
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Morning, Alex',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.waving_hand,
+                                      color: Colors.amber,
+                                      size: 22,
+                                    ),
+                                  ],
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.notifications_outlined,
+                                  ),
+                                  onPressed: () {
+                                    // Bildirimler sayfasına git
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          actions: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.bookmark_border,
-                                color: Colors.black,
-                              ),
-                              onPressed: () {
-                                // Kaydedilmiş haberlere git
-                              },
-                            ),
-                          ],
                         ),
 
                         // Arama Çubuğu
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.all(16.0),
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                             child: TextField(
                               controller: _searchController,
                               decoration: InputDecoration(
-                                hintText: 'Search',
+                                hintText: 'Haber ara...',
                                 prefixIcon: const Icon(Icons.search),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.filter_list),
-                                  onPressed: () {
-                                    // Filtre menüsünü aç
-                                  },
-                                ),
+                                suffixIcon:
+                                    _searchController.text.isNotEmpty
+                                        ? IconButton(
+                                          icon: const Icon(Icons.clear),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            _handleSearch('');
+                                          },
+                                        )
+                                        : null,
                                 filled: true,
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
@@ -244,19 +299,163 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               onSubmitted: _handleSearch,
+                              onChanged: (value) {
+                                setState(() {});
+                              },
                               textInputAction: TextInputAction.search,
                             ),
                           ),
                         ),
 
-                        // İçerik
-                        if (_isSearching)
-                          _buildSearchResults(newsProvider)
-                        else
-                          ..._buildHomeContent(newsProvider),
+                        // Kategori Tabları
+                        SliverToBoxAdapter(
+                          child: TabBar(
+                            controller: _tabController,
+                            isScrollable: true,
+                            labelColor: Colors.black,
+                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: Colors.black,
+                            indicatorSize: TabBarIndicatorSize.label,
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            unselectedLabelStyle: const TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 14,
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            labelPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            tabs:
+                                _categories
+                                    .map((category) => Tab(text: category))
+                                    .toList(),
+                          ),
+                        ),
+
+                        // Devam Edilen Okumalar
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Continue Reading',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                _buildContinueReadingCard(newsProvider),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Seçilen Haberler
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _isSearching
+                                      ? 'Arama Sonuçları'
+                                      : _selectedCategoryIndex == 0
+                                      ? 'Selected For You'
+                                      : '${_categories[_selectedCategoryIndex]} Haberleri',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (!_isSearching)
+                                  TextButton(
+                                    onPressed: () {
+                                      // Tüm kişiselleştirilmiş haberleri göster
+                                    },
+                                    child: const Text(
+                                      'Explore More',
+                                      style: TextStyle(color: Colors.teal),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Haberler Listesi
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              // Kategori seçimine göre gösterilecek haber listesini belirle
+                              final List<NewsModel> newsList;
+                              if (_isSearching) {
+                                newsList = newsProvider.searchResults;
+                              } else if (_selectedCategoryIndex == 0) {
+                                newsList = newsProvider.personalizedNews;
+                              } else {
+                                newsList = newsProvider.categoryNews;
+                              }
+
+                              // Yükleniyor durumu
+                              if (newsProvider.isLoading && newsList.isEmpty) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              // Boş liste durumu
+                              if (newsList.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: Text(
+                                      _isSearching
+                                          ? 'Arama sonucu bulunamadı'
+                                          : 'Haber bulunamadı',
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final news = newsList[index];
+                              return _buildSelectedNewsItem(news);
+                            },
+                            childCount:
+                                _isSearching
+                                    ? (newsProvider.searchResults.isEmpty
+                                        ? 1
+                                        : newsProvider.searchResults.length)
+                                    : _selectedCategoryIndex == 0
+                                    ? (newsProvider.personalizedNews.isEmpty
+                                        ? 1
+                                        : newsProvider.personalizedNews.length >
+                                            3
+                                        ? 3
+                                        : newsProvider.personalizedNews.length)
+                                    : (newsProvider.categoryNews.isEmpty
+                                        ? 1
+                                        : newsProvider.categoryNews.length),
+                          ),
+                        ),
 
                         // Yükleniyor
-                        if (newsProvider.isLoading && !_isLoadingMore)
+                        if (newsProvider.isLoading &&
+                            !_isLoadingMore &&
+                            ((_selectedCategoryIndex == 0 &&
+                                    newsProvider.personalizedNews.isNotEmpty) ||
+                                (_selectedCategoryIndex != 0 &&
+                                    newsProvider.categoryNews.isNotEmpty)))
                           const SliverToBoxAdapter(
                             child: Center(
                               child: Padding(
@@ -283,17 +482,29 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedNavIndex,
         onTap: (index) {
-          setState(() {
-            _selectedNavIndex = index;
-          });
+          // Artı butonuna tıklandığında direkt haber oluşturma sayfasına git
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateNewsScreen()),
+            );
+          } else {
+            setState(() {
+              _selectedNavIndex = index < 2 ? index : index - 1;
+            });
+          }
         },
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
           BottomNavigationBarItem(
+            icon: Icon(Icons.add_circle, size: 40, color: Color(0xFFB21274)),
+            label: '',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.bookmark),
-            label: 'Bookmark',
+            label: 'Kaydedilenler',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
@@ -301,200 +512,267 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Widget> _buildHomeContent(UnifiedNewsProvider newsProvider) {
-    return [
-      // Trend Olan
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Trending',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Tüm trend haberleri göster
-                },
-                child: const Text('See all'),
-              ),
-            ],
-          ),
+  // Devam Edilen Okuma Kartı
+  Widget _buildContinueReadingCard(UnifiedNewsProvider newsProvider) {
+    // Eğer devam edilen haber yoksa boş bir container döndür
+    if (newsProvider.continueReadingNews.isEmpty) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
         ),
-      ),
-
-      // Trend Haberler Listesi
-      SliverToBoxAdapter(
-        child: SizedBox(
-          height: 320,
-          child:
-              newsProvider.trendingNews.isEmpty
-                  ? const Center(child: Text('Trend haber bulunamadı'))
-                  : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: newsProvider.trendingNews.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        width:
-                            MediaQuery.of(context).size.width *
-                            0.85, // Genişliği artırıldı
-                        margin: const EdgeInsets.only(right: 16),
-                        child: NewsCard(
-                          news: newsProvider.trendingNews[index],
-                          isTrending: true,
-                          onTap: () {
-                            _navigateToNewsDetail(
-                              newsProvider.trendingNews[index],
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-        ),
-      ),
-
-      // En Son Haberler
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Latest',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Tüm son haberleri göster
-                },
-                child: const Text('See all'),
-              ),
-            ],
-          ),
-        ),
-      ),
-
-      // Kategori Seçimi - Görsel ile uyumlu alt çizgili tab tasarımı
-      SliverToBoxAdapter(
-        child: SizedBox(height: 44, child: _buildCategoryTabs(newsProvider)),
-      ),
-
-      // Son Haberler Listesi
-      SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            // Seçili kategori "All" ise latest haberleri, değilse kategori haberlerini göster
-            final newsList =
-                _selectedCategoryIndex == 0
-                    ? newsProvider.latestNews
-                    : newsProvider.categoryNews;
-
-            if (newsList.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Center(child: Text('Haber bulunamadı')),
-              );
-            }
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: NewsCard(
-                news: newsList[index],
-                onTap: () {
-                  _navigateToNewsDetail(newsList[index]);
-                },
-              ),
-            );
-          },
-          childCount:
-              _selectedCategoryIndex == 0
-                  ? (newsProvider.latestNews.isEmpty
-                      ? 1
-                      : newsProvider.latestNews.length)
-                  : (newsProvider.categoryNews.isEmpty
-                      ? 1
-                      : newsProvider.categoryNews.length),
-        ),
-      ),
-    ];
-  }
-
-  // ChoiceChip yerine görsel ile uyumlu kategori tableri
-  Widget _buildCategoryTabs(UnifiedNewsProvider newsProvider) {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      itemCount: _categories.length,
-      itemBuilder: (context, index) {
-        final category = _categories[index];
-        final bool isSelected = index == _selectedCategoryIndex;
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedCategoryIndex = index;
-              _currentPage = 1; // Kategori değiştiğinde sayfa sayısını sıfırla
-            });
-
-            // Kategori id'si 0 ise (All) tüm haberleri getir, değilse kategoriye göre getir
-            if (category['id'] == 0) {
-              newsProvider.fetchLatestNews();
-            } else {
-              final categoryId = category['id'] as int;
-              newsProvider.fetchNewsByCategory(categoryId);
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: isSelected ? Colors.blue.shade600 : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-            ),
-            child: Text(
-              category['name'].toString(),
-              style: TextStyle(
-                color: isSelected ? Colors.blue.shade600 : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSearchResults(UnifiedNewsProvider newsProvider) {
-    if (newsProvider.searchResults.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Center(child: Text('Arama sonucu bulunamadı')),
-        ),
+        child: const Center(child: Text('Devam edilen okuma bulunamadı')),
       );
     }
 
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: NewsCard(
-            news: newsProvider.searchResults[index],
-            onTap: () {
-              _navigateToNewsDetail(newsProvider.searchResults[index]);
-            },
+    final news = newsProvider.continueReadingNews.first;
+
+    return GestureDetector(
+      onTap: () => _navigateToNewsDetail(news),
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              // Arkaplan resmi
+              Positioned.fill(
+                child:
+                    news.featuredImageUrl.isNotEmpty
+                        ? Image.network(
+                          news.featuredImageUrl,
+                          fit: BoxFit.cover,
+                        )
+                        : Container(color: Colors.grey[300]),
+              ),
+
+              // Karartma gradyanı
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // İçerik
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Başlık
+                    Text(
+                      news.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Yazar ve okuma süresi
+                    Row(
+                      children: [
+                        Text(
+                          news.authorName,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            '7:25',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      }, childCount: newsProvider.searchResults.length),
+        ),
+      ),
+    );
+  }
+
+  // Seçilen Haber Öğesi
+  Widget _buildSelectedNewsItem(NewsModel news) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: GestureDetector(
+        onTap: () => _navigateToNewsDetail(news),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sol taraf - Profil resmi
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.grey[200],
+                  child:
+                      news.authorName.isNotEmpty
+                          ? Text(
+                            news.authorName[0],
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                          : Icon(
+                            Icons.person,
+                            size: 16,
+                            color: Colors.grey[700],
+                          ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Sağ taraf - İçerik
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Başlık satırı
+                      Row(
+                        children: [
+                          // Yazar adı
+                          Expanded(
+                            child: Text(
+                              news.authorName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                          // Yorum sayısı
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '128',
+                              style: TextStyle(
+                                color: Colors.grey[800],
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Haber başlığı
+                      Text(
+                        news.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Alt bilgiler
+                      Row(
+                        children: [
+                          // Tarih
+                          Text(
+                            news.getFormattedDate(),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          // Artı butonu
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.add,
+                              size: 16,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

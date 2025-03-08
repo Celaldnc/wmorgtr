@@ -6,7 +6,7 @@ class NewsModel {
   final String date;
   final String link;
   final String featuredImageUrl;
-  final List<dynamic> categories;
+  final List<int> categories;
   final String source;
   final String authorName;
 
@@ -90,9 +90,9 @@ class NewsModel {
     }
 
     // Kategoriler
-    List<dynamic> categories = [];
+    List<int> categories = [];
     if (json['categories'] != null) {
-      categories = json['categories'];
+      categories = List<int>.from(json['categories']);
     }
 
     return NewsModel(

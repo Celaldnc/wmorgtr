@@ -4,7 +4,7 @@ import '../models/post_model.dart';
 class PostCard extends StatelessWidget {
   final Post post;
 
-  const PostCard({Key? key, required this.post}) : super(key: key);
+  const PostCard({super.key, required this.post});
 
   @override
   Widget build(BuildContext context) {

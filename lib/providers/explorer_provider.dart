@@ -10,13 +10,16 @@ class ExplorerProvider with ChangeNotifier {
   List<TopicModel> _topics = [];
   List<AuthorModel> _authors = [];
   List<NewsModel> _savedNews = [];
+  List<NewsModel> _filteredNews = [];
+  String _currentCategory = 'Tümü';
   bool _isLoading = false;
   String _error = '';
 
   // Getters
   List<TopicModel> get topics => _topics;
   List<AuthorModel> get authors => _authors;
-  List<NewsModel> get savedNews => _savedNews;
+  List<NewsModel> get savedNews =>
+      _currentCategory == 'Tümü' ? _savedNews : _filteredNews;
   bool get isLoading => _isLoading;
   String get error => _error;
 
@@ -24,6 +27,41 @@ class ExplorerProvider with ChangeNotifier {
     _initializeTopics();
     _loadAuthors();
     _loadSavedNews();
+  }
+
+  // Haberleri kategoriye göre filtrele
+  void filterNewsByCategory(String category) {
+    _currentCategory = category;
+    if (category == 'Tümü') {
+      _filteredNews = [];
+    } else {
+      _filteredNews =
+          _savedNews.where((news) {
+            // Haber kategorilerini kontrol et
+            final categoryNames =
+                news.categories.map((categoryId) {
+                  return getCategoryName(categoryId);
+                }).toList();
+
+            return categoryNames.contains(category);
+          }).toList();
+    }
+    notifyListeners();
+  }
+
+  // Kategori ID'sine göre kategori adını döndür
+  String getCategoryName(int categoryId) {
+    final Map<int, String> categoryNames = {
+      1: 'Android',
+      2: 'Apple',
+      3: 'ASUS',
+      4: 'Bilim Adamları',
+      5: 'Edebiyat',
+      6: 'Oyun',
+      7: 'Teknoloji',
+      // Diğer kategoriler...
+    };
+    return categoryNames[categoryId] ?? 'Diğer';
   }
 
   // Kategorileri başlat
@@ -189,7 +227,7 @@ class ExplorerProvider with ChangeNotifier {
           try {
             final newsItem = await _apiService.getNewsDetail(int.parse(id));
             news.add(newsItem);
-          } catch (e) {
+                    } catch (e) {
             print('Haber detayı alınırken hata: $e');
           }
         }

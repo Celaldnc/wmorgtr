@@ -7,11 +7,11 @@ class TopicCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const TopicCard({
-    Key? key,
+    super.key,
     required this.topic,
     required this.onSaveTap,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

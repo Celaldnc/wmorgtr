@@ -11,8 +11,7 @@ class NewsDetailScreen extends StatefulWidget {
   final int newsId;
   final NewsModel? initialNews;
 
-  const NewsDetailScreen({Key? key, required this.newsId, this.initialNews})
-    : super(key: key);
+  const NewsDetailScreen({super.key, required this.newsId, this.initialNews});
 
   @override
   State<NewsDetailScreen> createState() => _NewsDetailScreenState();

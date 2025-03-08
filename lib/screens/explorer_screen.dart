@@ -9,7 +9,7 @@ import '../screens/news_detail_screen.dart';
 import '../screens/topic_news_screen.dart';
 
 class ExplorerScreen extends StatefulWidget {
-  const ExplorerScreen({Key? key}) : super(key: key);
+  const ExplorerScreen({super.key});
 
   @override
   State<ExplorerScreen> createState() => _ExplorerScreenState();
@@ -19,18 +19,42 @@ class _ExplorerScreenState extends State<ExplorerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  bool _showCategories = false;
+  String _selectedCategory = 'Tümü';
+
+  final List<String> _categories = [
+    'Tümü',
+    'Android',
+    'Apple',
+    'ASUS',
+    'Bilim Adamları',
+    'Edebiyat',
+    'Oyun',
+    'Teknoloji',
+  ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.offset > 100 && !_showCategories) {
+      setState(() => _showCategories = true);
+    } else if (_scrollController.offset <= 100 && _showCategories) {
+      setState(() => _showCategories = false);
+    }
   }
 
   @override
@@ -63,32 +87,65 @@ class _ExplorerScreenState extends State<ExplorerScreen>
               ),
             ),
 
-            // Tab Bar
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
-                ),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                labelColor: Colors.blue,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.blue,
-                tabs: const [
-                  Tab(text: 'Konular'),
-                  Tab(text: 'Yazarlar'),
-                  Tab(text: 'Kaydedilenler'),
-                ],
-              ),
-            ),
-
-            // Tab içerikleri
+            // Tab Bar ve içerik
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: const [_TopicsTab(), _AuthorsTab(), _SavedTab()],
+              child: DefaultTabController(
+                length: 3,
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      // Kategori AppBar
+                      SliverAppBar(
+                        pinned: true,
+                        floating: true,
+                        backgroundColor: Colors.white,
+                        elevation: innerBoxIsScrolled ? 4 : 0,
+                        automaticallyImplyLeading: false,
+                        title: Container(
+                          height: 40,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _categories.length,
+                            itemBuilder: (context, index) {
+                              final category = _categories[index];
+                              return _buildCategoryChip(
+                                category,
+                                category == _selectedCategory,
+                              );
+                            },
+                          ),
+                        ),
+                        toolbarHeight: 56,
+                      ),
+
+                      // Tab Bar
+                      SliverPersistentHeader(
+                        delegate: _SliverAppBarDelegate(
+                          TabBar(
+                            controller: _tabController,
+                            labelColor: Colors.blue,
+                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: Colors.blue,
+                            tabs: const [
+                              Tab(text: 'Konular'),
+                              Tab(text: 'Yazarlar'),
+                              Tab(text: 'Kaydedilenler'),
+                            ],
+                          ),
+                        ),
+                        pinned: true,
+                      ),
+                    ];
+                  },
+                  body: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildTopicsTab(),
+                      const _AuthorsTab(),
+                      const _SavedTab(),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
@@ -96,13 +153,32 @@ class _ExplorerScreenState extends State<ExplorerScreen>
       ),
     );
   }
-}
 
-class _TopicsTab extends StatelessWidget {
-  const _TopicsTab({Key? key}) : super(key: key);
+  Widget _buildCategoryChip(String label, bool isSelected) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (bool selected) {
+          if (selected) {
+            setState(() {
+              _selectedCategory = label;
+            });
+            // Provider üzerinden haberleri filtrele
+            context.read<ExplorerProvider>().filterNewsByCategory(label);
+          }
+        },
+        selectedColor: Colors.blue.shade100,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.blue.shade800 : Colors.black87,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTopicsTab() {
     return Consumer<ExplorerProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
@@ -147,7 +223,7 @@ class _TopicsTab extends StatelessWidget {
 }
 
 class _AuthorsTab extends StatelessWidget {
-  const _AuthorsTab({Key? key}) : super(key: key);
+  const _AuthorsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +262,7 @@ class _AuthorsTab extends StatelessWidget {
 }
 
 class _SavedTab extends StatelessWidget {
-  const _SavedTab({Key? key}) : super(key: key);
+  const _SavedTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -252,5 +328,32 @@ class _SavedTab extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+// SliverPersistentHeader için delegate sınıfı
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+
+  _SliverAppBarDelegate(this._tabBar);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: Colors.white, child: _tabBar);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

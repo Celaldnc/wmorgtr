@@ -81,6 +81,22 @@ class ApiService {
     }
   }
 
+  // Arama parametresi ile haberleri getir
+  Future<List<NewsModel>> getNewsBySearch(
+    String searchTerm, {
+    int page = 1,
+    int perPage = 10,
+  }) async {
+    try {
+      final data = await _get(
+        'posts?search=$searchTerm&page=$page&per_page=$perPage&_embed',
+      );
+      return (data as List).map((item) => NewsModel.fromJson(item)).toList();
+    } catch (e) {
+      throw Exception('Arama ile haberler alınırken bir hata oluştu: $e');
+    }
+  }
+
   // Kategori bazlı haberleri getir (Post formatında)
   Future<List<Post>> getPostsByCategory(
     int categoryId, {

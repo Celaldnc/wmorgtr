@@ -88,16 +88,9 @@ class AuthService {
         }
 
         // Tip doğrulaması yaparak dönüştür
-        if (data is Map<String, dynamic>) {
-          print("Kullanıcı detayları başarıyla alındı: ${data['username']}");
-          return data;
-        } else {
-          print("Veri beklenen türde değil. Tür: ${data.runtimeType}");
-          // Dönüşüm yapmaya çalışalım
-          final convertedData = Map<String, dynamic>.from(data as Map);
-          return convertedData;
-        }
-      } catch (castError) {
+        print("Kullanıcı detayları başarıyla alındı: ${data['username']}");
+        return data;
+            } catch (castError) {
         print("Veri dönüşüm hatası: $castError");
         return null;
       }
@@ -192,12 +185,6 @@ class AuthService {
       print("Firestore'a veri yazma girişimi: $userId için");
       print("Kaydedilecek veri: $userData");
 
-      // Firestore referansını kontrol et
-      if (_firestore == null) {
-        print("HATA: Firestore instance null!");
-        return;
-      }
-
       // Koleksiyon ve belge referansını hazırla
       final userDocRef = _firestore.collection('users').doc(userId);
 
@@ -224,7 +211,7 @@ class AuthService {
         print("Firebase hata mesajı: ${e.message}");
       }
 
-      throw e; // Hata yönetimini üst metoda bırak
+      rethrow; // Hata yönetimini üst metoda bırak
     }
   }
 }

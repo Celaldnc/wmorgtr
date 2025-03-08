@@ -7,11 +7,11 @@ class AuthorCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const AuthorCard({
-    Key? key,
+    super.key,
     required this.author,
     required this.onFollowTap,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

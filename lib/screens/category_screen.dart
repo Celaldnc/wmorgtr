@@ -7,7 +7,7 @@ class CategoryScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
 
-  CategoryScreen({required this.categoryId, required this.categoryName});
+  const CategoryScreen({super.key, required this.categoryId, required this.categoryName});
 
   @override
   _CategoryScreenState createState() => _CategoryScreenState();

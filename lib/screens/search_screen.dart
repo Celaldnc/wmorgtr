@@ -4,6 +4,8 @@ import '../providers/news_provider.dart';
 import '../widgets/post_card.dart';
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }

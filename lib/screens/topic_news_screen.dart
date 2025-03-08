@@ -10,10 +10,10 @@ class TopicNewsScreen extends StatefulWidget {
   final String topicName;
 
   const TopicNewsScreen({
-    Key? key,
+    super.key,
     required this.topicId,
     required this.topicName,
-  }) : super(key: key);
+  });
 
   @override
   State<TopicNewsScreen> createState() => _TopicNewsScreenState();
